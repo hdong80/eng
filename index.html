@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta viewport="width=device-width, initial-scale=1.0">
     <title>단어 학습</title>
     <style>
         body {
@@ -37,13 +37,13 @@
         .status {
             margin-top: 0px;
             font-size: 60px;
+            cursor: pointer;
         }
 
         .meaning {
             color: white;
-            display: block;
-            margin-bottom: 0px;
-            text-align: center;
+            margin-left: 10px;
+            flex-grow: 1;
         }
 
         .search-links {
@@ -62,36 +62,10 @@
         }
 
         #copyStatus {
-            margin-top: 0px;
+            margin-top: 20px;
             padding: 20px 40px;
             font-size: 16px;
             cursor: pointer;
-        }
-
-        @media screen and (max-width: 768px) {
-            .word-card {
-                width: 70%;
-                font-size: 18px;
-                padding: 15px;
-                margin-left: 60px; /* 모바일 화면에서 왼쪽 여백 추가 */
-            }
-
-            .meaning {
-                font-size: 14px;
-            }
-
-            .status {
-                font-size: 40px;
-            }
-
-            .search-link {
-                font-size: 14px;
-            }
-
-            #copyStatus {
-                padding: 15px 30px;
-                font-size: 14px;
-            }
         }
     </style>
 </head>
@@ -140,9 +114,34 @@
 
         async function displayWords(date) {
             const allWords = await fetchWordsFromSheet();
-            const seed = getSeedFromDate(date);
-            const rng = new Math.seedrandom(seed);
-            let wordsForToday = allWords.sort(() => 0.5 - rng()).slice(0, 20);
+            let wordsForToday = [];
+            const dayOfWeek = date.getDay();
+            const isFirstDayOfMonth = date.getDate() === 1;
+
+            if (isFirstDayOfMonth) {
+                const lastMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+                const lastMonthDays = new Date(date.getFullYear(), date.getMonth(), 0).getDate();
+
+                for (let day = 1; day <= lastMonthDays; day++) {
+                    lastMonth.setDate(day);
+                    if (lastMonth.getDay() !== 3) {
+                        const seed = getSeedFromDate(lastMonth);
+                        const rng = new Math.seedrandom(seed);
+                        wordsForToday = wordsForToday.concat(allWords.sort(() => 0.5 - rng()).slice(0, 20));
+                    }
+                }
+            } else if (dayOfWeek === 3) {
+                for (let i = 1; i <= 6; i++) {
+                    const tempDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - i);
+                    const seed = getSeedFromDate(tempDate);
+                    const rng = new Math.seedrandom(seed);
+                    wordsForToday = wordsForToday.concat(allWords.sort(() => 0.5 - rng()).slice(0, 20));
+                }
+            } else {
+                const seed = getSeedFromDate(date);
+                const rng = new Math.seedrandom(seed);
+                wordsForToday = allWords.sort(() => 0.5 - rng()).slice(0, 20);
+            }
 
             const wordListElement = document.getElementById('wordList');
             wordListElement.innerHTML = '';
@@ -165,6 +164,22 @@
             });
         }
 
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.word-card') && !event.target.closest('.search-link')) {
+                const wordCards = document.querySelectorAll('.word-card');
+                wordCards.forEach(card => {
+                    card.style.backgroundColor = card.style.backgroundColor === 'black' ? 'white' : 'black';
+                });
+            } else if (event.target.classList.contains('status')) {
+                const statusElement = event.target;
+                const currentStatus = statusElement.textContent;
+                const nextStatus = { '●': '▲', '▲': '×', '×': '●' }[currentStatus];
+                statusElement.textContent = nextStatus;
+                const word = statusElement.parentNode.querySelector('div:first-child').textContent;
+                updateStatus(word, nextStatus);
+            }
+        });
+
         const datePicker = document.getElementById('datePicker');
         datePicker.addEventListener('change', function() {
             const selectedDate = new Date(this.value);
@@ -183,7 +198,7 @@
             wordCards.forEach((card, index) => {
                 const status = card.querySelector('.status').textContent;
                 if (status === '▲') {
-                    const word = card.querySelector('div:first-child').textContent;
+                    const word = card.children[0].textContent;
                     const meaning = card.querySelector('.meaning').textContent;
                     statusText += `${index + 1}. 단어: ${word}, 뜻: ${meaning}\n`;
                 }
@@ -198,37 +213,6 @@
                 }
             } else {
                 alert('복사할 세모 상태의 단어가 없습니다.');
-            }
-        });
-
-        // 상태 변경 로직
-        document.addEventListener('click', function(event) {
-            const target = event.target;
-            if (target.classList.contains('status')) {
-                const currentStatus = target.textContent;
-                const nextStatus = { '●': '▲', '▲': '×', '×': '●' }[currentStatus];
-                target.textContent = nextStatus;
-                const word = target.parentNode.querySelector('div:first-child').textContent;
-                updateStatus(word, nextStatus);
-            }
-        });
-
-        // 전체 박스 색 변경 로직
-        function changeBoxColor(newColor) {
-            const wordCards = document.querySelectorAll('.word-card');
-            wordCards.forEach((card) => {
-                card.style.backgroundColor = newColor;
-            });
-        }
-
-        let isDarkMode = false;
-
-        document.body.addEventListener('click', function(event) {
-            const isWordCardClick = event.target.closest('.word-card');
-            if (!isWordCardClick) {
-                isDarkMode = !isDarkMode;
-                const newColor = isDarkMode ? 'black' : 'white';
-                changeBoxColor(newColor);
             }
         });
     </script>
