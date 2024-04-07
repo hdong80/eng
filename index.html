@@ -37,14 +37,15 @@
             font-size: 40px;
         }
         .meaning {
-            color: white; /* Change text color to white */
-            display: block; /* Make the meaning always visible */
+            color: white; /* Text color is white */
+            display: block; /* Meaning is always visible */
         }
         .search-link {
             text-decoration: none;
             color: #007bff;
             cursor: pointer;
             margin-top: 10px;
+            display: block; /* Ensures links are on separate lines */
         }
         #copyStatus {
             margin-top: 20px;
@@ -109,41 +110,20 @@
                 const wordCard = document.createElement('div');
                 wordCard.className = 'word-card';
                 const currentStatus = getStatus(word);
+
                 wordCard.innerHTML = `
                     <div>${word}</div>
                     <div class="meaning">${meaning}</div>
                     <div class="status">${currentStatus}</div>
-                    <a href="http://aha-dic.com/View.asp?word=${encodeURIComponent(word)}" target="_blank" class="search-link">검색</a>
+                    <div class="search-links">
+                        <a href="http://aha-dic.com/View.asp?word=${encodeURIComponent(word)}" target="_blank" class="search-link">사전 검색</a>
+                        <a href="https://www.google.com/search?q=${encodeURIComponent(word)}" target="_blank" class="search-link">구글 검색</a>
+                    </div>
                 `;
 
                 wordListElement.appendChild(wordCard);
             });
         }
-
-        function copyStatusToClipboard() {
-            // Function logic remains unchanged
-        }
-
-        function changeCardBackgroundColor(newColor) {
-            const wordCards = document.querySelectorAll('.word-card');
-            wordCards.forEach((card) => {
-                card.style.backgroundColor = newColor;
-            });
-        }
-
-        let isDarkMode = false;
-
-        function toggleDarkMode() {
-            isDarkMode = !isDarkMode;
-            const newColor = isDarkMode ? 'black' : 'white';
-            changeCardBackgroundColor(newColor);
-        }
-
-        document.body.addEventListener('click', function(event) {
-            if (!event.target.closest('.word-card')) {
-                toggleDarkMode();
-            }
-        });
 
         const datePicker = document.getElementById('datePicker');
         datePicker.addEventListener('change', function() {
@@ -157,16 +137,58 @@
         displayDate(today);
         displayWords(today);
 
-        document.getElementById('copyStatus').addEventListener('click', copyStatusToClipboard);
+        document.getElementById('copyStatus').addEventListener('click', async function() {
+            const wordCards = document.querySelectorAll('.word-card');
+            let statusText = '';
+            wordCards.forEach((card, index) => {
+                const status = card.querySelector('.status').textContent;
+                if (status === '▲') {
+                    const word = card.querySelector('div:first-child').textContent;
+                    const meaning = card.querySelector('.meaning').textContent;
+                    statusText += `${index + 1}. 단어: ${word}, 뜻: ${meaning}\n`;
+                }
+            });
 
-        // Event listener for changing status only when the status element is clicked
+            if (statusText) {
+                try {
+                    await navigator.clipboard.writeText(statusText);
+                    alert('세모 상태인 단어가 클립보드에 복사되었습니다.');
+                } catch (err) {
+                    console.error('클립보드 복사에 실패했습니다.', err);
+                }
+            } else {
+                alert('복사할 세모 상태의 단어가 없습니다.');
+            }
+        });
+
+        // 상태 변경 로직
         document.addEventListener('click', function(event) {
-            if (event.target.classList.contains('status')) {
-                const statusElement = event.target;
-                const currentStatus = statusElement.textContent;
+            const target = event.target;
+            if (target.classList.contains('status')) {
+                const currentStatus = target.textContent;
                 const nextStatus = { '●': '▲', '▲': '×', '×': '●' }[currentStatus];
-                statusElement.textContent = nextStatus;
-                updateStatus(statusElement.previousElementSibling.previousElementSibling.textContent, nextStatus);
+                target.textContent = nextStatus;
+                const word = target.parentNode.querySelector('div:first-child').textContent;
+                updateStatus(word, nextStatus);
+            }
+        });
+
+        // 전체 박스 색 변경 로직
+        function changeBoxColor(newColor) {
+            const wordCards = document.querySelectorAll('.word-card');
+            wordCards.forEach((card) => {
+                card.style.backgroundColor = newColor;
+            });
+        }
+
+        let isDarkMode = false;
+
+        document.body.addEventListener('click', function(event) {
+            const isWordCardClick = event.target.closest('.word-card');
+            if (!isWordCardClick) {
+                isDarkMode = !isDarkMode;
+                const newColor = isDarkMode ? 'black' : 'white';
+                changeBoxColor(newColor);
             }
         });
     </script>
