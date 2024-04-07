@@ -18,14 +18,13 @@
             background: white;
             border-radius: 10px;
             margin-bottom: 20px;
-            padding: 30px;
+            padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 60%;
-            font-size: 28px;
+            width: 120%;
+            font-size: 24px;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            flex-direction: row;
+            align-items: center; /* 수정: 단어 카드 내 요소들을 가운데 정렬 */
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
@@ -33,23 +32,26 @@
             background-color: #f0f0f0;
         }
         .status {
-            margin-top: 20px;
-            font-size: 40px;
+            margin-top: 0px;
+            font-size: 60px;
         }
         .meaning {
-            color: white; /* Text color is white */
-            display: block; /* Meaning is always visible */
+            color: white; /* 수정: 뜻의 색상을 완전 흰색으로 변경 */
+            display: block;
+            margin-bottom: 0px;
+            text-align: center; /* 수정: 뜻을 가운데 정렬 */
         }
         .search-link {
             text-decoration: none;
             color: #007bff;
             cursor: pointer;
-            margin-top: 10px;
-            display: block; /* Ensures links are on separate lines */
+            margin-top: 5px;
+            display: block;
+            font-size: 18px;
         }
         #copyStatus {
-            margin-top: 20px;
-            padding: 10px 20px;
+            margin-top: 0px;
+            padding: 20px 40px;
             font-size: 16px;
             cursor: pointer;
         }
