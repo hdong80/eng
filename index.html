@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>단어 학습 페이지</title>
+    <style>
+        /* 단어 목록 스타일 */
+        #wordList {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .wordItem {
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h2>단어 학습</h2>
+    <div id="wordList">
+        <!-- 단어 목록이 여기에 동적으로 추가됩니다 -->
+    </div>
+
+    <script>
+        async function fetchWordsFromSheet() {
+            const sheetId = '1SyOcbdgYI4gedVw0hOsIxUID9vt7XpiID4k4bVdmOEs'; // 구글 시트 ID
+            const apiKey = 'AIzaSyDrClgUbT-0cFoYe4W81dyxikZVbjVlcT8'; // 구글 API 키
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:B?key=${apiKey}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                return data.values; // 단어와 뜻이 포함된 배열을 반환
+            } catch (error) {
+                console.error('Error fetching data from sheet:', error);
+                return [];
+            }
+        }
+
+        async function displayWords() {
+            const words = await fetchWordsFromSheet();
+            const wordListElement = document.getElementById('wordList');
+
+            words.forEach(word => {
+                const wordElement = document.createElement('div');
+                wordElement.className = 'wordItem';
+                wordElement.textContent = `${word[0]} - ${word[1]}`; // 단어와 뜻을 표시
+                wordListElement.appendChild(wordElement);
+            });
+        }
+
+        displayWords(); // 페이지 로드 시 단어 목록을 표시
+    </script>
+</body>
+</html>
