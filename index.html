@@ -3,58 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단어 학습 페이지</title>
+    <title>단어 학습</title>
     <style>
-        /* 단어 목록 스타일 */
-        #wordList {
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f9f9f9;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 20px;
         }
-        .wordItem {
-            margin: 5px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        .word-card {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 60%;
+            font-size: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .word-card:hover .meaning {
+            display: block; /* Show meaning on hover */
+        }
+        .status {
+            margin-left: 20px;
+            font-size: 40px;
+            cursor: pointer;
+        }
+        .meaning {
+            color: #666;
+            display: none; /* Initially hide the meaning */
+        }
+        .date-display, #copyStatus, #datePicker {
+            margin-bottom: 20px;
+        }
+        .search-link {
+            text-decoration: none;
+            color: #007bff;
+            cursor: pointer;
+        }
+        #copyStatus {
+            padding: 10px 20px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <h2>단어 학습</h2>
-    <div id="wordList">
-        <!-- 단어 목록이 여기에 동적으로 추가됩니다 -->
-    </div>
+    <input type="date" id="datePicker" />
+    <div class="date-display" id="dateDisplay"></div>
+    <div id="wordList"></div>
+    <button id="copyStatus">세모 상태 단어 복사</button>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
     <script>
         async function fetchWordsFromSheet() {
-            const sheetId = '1SyOcbdgYI4gedVw0hOsIxUID9vt7XpiID4k4bVdmOEs'; // 구글 시트 ID
-            const apiKey = 'AIzaSyDrClgUbT-0cFoYe4W81dyxikZVbjVlcT8'; // 구글 API 키
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:B?key=${apiKey}`;
+            const sheetId = '1SyOcbdgYI4gedVw0hOsIxUID9vt7XpiID4k4bVdmOEs';
+            const apiKey = 'AIzaSyDrClgUbT-0cFoYe4W81dyxikZVbjVlcT8';
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/en1!A:B?key=${apiKey}`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                return data.values; // 단어와 뜻이 포함된 배열을 반환
+                return data.values.slice(1); // 첫 번째 행(제목 행)을 제외하고 반환
             } catch (error) {
                 console.error('Error fetching data from sheet:', error);
                 return [];
             }
         }
 
-        async function displayWords() {
-            const words = await fetchWordsFromSheet();
-            const wordListElement = document.getElementById('wordList');
+        function displayDate(date) {
+            const dateElement = document.getElementById('dateDisplay');
+            dateElement.textContent = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+        }
 
-            words.forEach(word => {
-                const wordElement = document.createElement('div');
-                wordElement.className = 'wordItem';
-                wordElement.textContent = `${word[0]} - ${word[1]}`; // 단어와 뜻을 표시
-                wordListElement.appendChild(wordElement);
+        function getSeedFromDate(date) {
+            return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+        }
+
+        function updateStatus(word, status) {
+            const currentStatus = JSON.parse(localStorage.getItem('wordStatus')) || {};
+            currentStatus[word] = status;
+            localStorage.setItem('wordStatus', JSON.stringify(currentStatus));
+        }
+
+        function getStatus(word) {
+            const currentStatus = JSON.parse(localStorage.getItem('wordStatus')) || {};
+            return currentStatus[word] || '●';
+        }
+
+        async function displayWords(date) {
+            const allWords = await fetchWordsFromSheet();
+            const seed = getSeedFromDate(date);
+            const rng = new Math.seedrandom(seed);
+            let wordsForToday = allWords.sort(() => 0.5 - rng()).slice(0, 20);
+
+            const wordListElement = document.getElementById('wordList');
+            wordListElement.innerHTML = '';
+            wordsForToday.forEach(([word, meaning]) => {
+                const wordCard = document.createElement('div');
+                wordCard.className = 'word-card';
+                const currentStatus = getStatus(word);
+                wordCard.innerHTML = `
+                    <div>${word}</div>
+                    <div class="meaning">${meaning}</div>
+                    <div class="status">${currentStatus}</div>
+                    <div class="search-link">검색</div>
+                `;
+
+                wordCard.querySelector('.search-link').addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    window.open(`http://aha-dic.com/View.asp?word=${encodeURIComponent(word)}`, '_blank');
+                });
+
+                wordCard.querySelector('.status').addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const nextStatus = { '●': '▲', '▲': '×', '×': '●' }[currentStatus];
+                    event.target.textContent = nextStatus;
+                    updateStatus(word, nextStatus);
+                });
+
+                wordListElement.appendChild(wordCard);
             });
         }
 
-        displayWords(); // 페이지 로드 시 단어 목록을 표시
+        function copyStatusToClipboard() {
+            const wordCards = document.querySelectorAll('.word-card');
+            let statusText = '';
+            wordCards.forEach((card, index) => {
+                const status = card.querySelector('.status').textContent;
+                if (status === '▲') {
+                    const word = card.childNodes[0].textContent;
+                    const meaning = card.querySelector('.meaning').textContent;
+                    statusText += `${index + 1}. 단어: ${word}, 뜻: ${meaning}\n`;
+                }
+            });
+
+            if (statusText) {
+                navigator.clipboard.writeText(statusText).then(() => {
+                    alert('세모 상태인 단어가 클립보드에 복사되었습니다.');
+                }, (err) => {
+                    console.error('클립보드 복사에 실패했습니다.', err);
+                });
+            } else {
+                alert('복사할 세모 상태의 단어가 없습니다.');
+            }
+        }
+
+        const datePicker = document.getElementById('datePicker');
+        datePicker.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            displayDate(selectedDate);
+            displayWords(selectedDate);
+        });
+
+        const today = new Date();
+        datePicker.valueAsDate = today;
+        displayDate(today);
+        displayWords(today);
+
+        document.getElementById('copyStatus').addEventListener('click', copyStatusToClipboard);
     </script>
 </body>
 </html>
