@@ -14,46 +14,84 @@
             flex-direction: column;
             align-items: center;
         }
+
         .word-card {
             background: white;
             border-radius: 10px;
             margin-bottom: 20px;
             padding: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 120%;
-            font-size: 24px;
+            width: 80%;
+            font-size: 20px;
             display: flex;
             flex-direction: row;
-            align-items: center; /* 수정: 단어 카드 내 요소들을 가운데 정렬 */
+            align-items: center;
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
+
         .word-card:hover {
             background-color: #f0f0f0;
         }
+
         .status {
             margin-top: 0px;
             font-size: 60px;
         }
+
         .meaning {
-            color: white; /* 수정: 뜻의 색상을 완전 흰색으로 변경 */
+            color: white;
             display: block;
             margin-bottom: 0px;
-            text-align: center; /* 수정: 뜻을 가운데 정렬 */
+            text-align: center;
         }
+
+        .search-links {
+            margin-left: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
         .search-link {
             text-decoration: none;
             color: #007bff;
             cursor: pointer;
             margin-top: 5px;
-            display: block;
             font-size: 18px;
         }
+
         #copyStatus {
             margin-top: 0px;
             padding: 20px 40px;
             font-size: 16px;
             cursor: pointer;
+        }
+
+        @media screen and (max-width: 768px) {
+            .word-card {
+                width: 90%;
+                font-size: 16px;
+                padding: 15px;
+                margin-left: 20px; /* 모바일 화면에서 왼쪽 여백 추가 */
+            }
+
+            .meaning {
+                font-size: 14px;
+            }
+
+            .status {
+                font-size: 40px;
+            }
+
+            .search-link {
+                font-size: 14px;
+            }
+
+            #copyStatus {
+                padding: 15px 30px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
