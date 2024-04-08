@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta viewport="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>단어 학습</title>
     <style>
         body {
@@ -13,6 +13,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            cursor: pointer; /* 바디를 터치할 수 있도록 cursor 속성 추가 */
         }
 
         .word-card {
@@ -28,6 +29,7 @@
             align-items: center;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            margin-left: 10px; /* 모바일 화면에서 왼쪽 간격 추가 */
         }
 
         .word-card:hover {
@@ -48,6 +50,7 @@
 
         .search-links {
             margin-left: auto;
+            margin-right: 10px; /* 검색 링크와 동그라미 세모 엑스 간격 조정 */
             display: flex;
             flex-direction: column;
             align-items: flex-end;
@@ -165,20 +168,29 @@
         }
 
         document.addEventListener('click', function(event) {
-            if (!event.target.closest('.word-card') && !event.target.closest('.search-link')) {
+            const clickedWordCard = event.target.closest('.word-card');
+            if (clickedWordCard) {
+                toggleStatus(clickedWordCard);
+            } else {
                 const wordCards = document.querySelectorAll('.word-card');
                 wordCards.forEach(card => {
-                    card.style.backgroundColor = card.style.backgroundColor === 'black' ? 'white' : 'black';
+                    toggleBackgroundColor(card);
                 });
-            } else if (event.target.classList.contains('status')) {
-                const statusElement = event.target;
-                const currentStatus = statusElement.textContent;
-                const nextStatus = { '●': '▲', '▲': '×', '×': '●' }[currentStatus];
-                statusElement.textContent = nextStatus;
-                const word = statusElement.parentNode.querySelector('div:first-child').textContent;
-                updateStatus(word, nextStatus);
             }
         });
+
+        function toggleStatus(card) {
+            const statusElement = card.querySelector('.status');
+            const currentStatus = statusElement.textContent;
+            const nextStatus = { '●': '▲', '▲': '×', '×': '●' }[currentStatus];
+            statusElement.textContent = nextStatus;
+            const word = card.querySelector('div:first-child').textContent;
+            updateStatus(word, nextStatus);
+        }
+
+        function toggleBackgroundColor(card) {
+            card.style.backgroundColor = card.style.backgroundColor === 'black' ? 'white' : 'black';
+        }
 
         const datePicker = document.getElementById('datePicker');
         datePicker.addEventListener('change', function() {
